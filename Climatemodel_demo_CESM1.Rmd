@@ -41,10 +41,10 @@ library(lattice)
 library(abind)
 
 # path and filename for data
-ncpath <- "~/Box Sync/Courses_UCSB/ESM237_Spring2023/"   # path (directory)
-ncname <- "b.e11.B20TRC5CNBDRD.f09_g16.102.cam.h0.TS.192001-200512.nc"  # CESM1 filename
+ncpath <- "/Users/katiemunster/Desktop/ESM237/esm237_HW2/"   # path (directory)
+ncname <- "tas_Amon_MIROC-ES2L_ssp585_r1i1p1f2_gn_201501-210012.nc"  # CESM1 filename
 ncfname <- paste(ncpath, ncname, sep="")
-dname <- "TS"  # this is the name of the variable you want to look at
+dname <- "tas"  # this is the name of the variable you want to look at
 
 ncin <- nc_open(ncfname)
 #print(ncin)
@@ -99,7 +99,7 @@ rtime <- chron(time,origin=c(tmonth, tday, tyear))
 OK now let's read in the CESM temperature data! This may take a while, depending on your computer and the size of the data file. It's also a good idea to get some attributes of the data: the full name ("long_name"), units, and the value used to fill in places where there are no data ("_FillValue"). 
 
 ```{r readtemp}
-TS <- ncvar_get(ncin, "TS")
+TS <- ncvar_get(ncin, "tas")
 dlname <- ncatt_get(ncin,dname,"long_name")
 dunits <- ncatt_get(ncin,dname,"units")
 fillvalue <- ncatt_get(ncin,dname,"_FillValue")
