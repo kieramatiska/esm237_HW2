@@ -43,7 +43,10 @@ library(abind)
 # path and filename for data
 ncpath <- "/Users/kieramatiska/Desktop/Bren/ESM 237/HW2/esm237_HW2/"   # path (directory)
 # ncpath <- "/Users/katiemunster/Desktop/ESM237/esm237_HW2/"
-ncname <- "tas_Amon_MIROC-ES2L_ssp585_r1i1p1f2_gn_201501-210012.nc"  # CESM1 filename
+# ncname <- "tas_Amon_MIROC-ES2L_ssp585_r1i1p1f2_gn_201501-210012.nc"  # Miroc ES2L Scenario 585
+# ncname <- "tas_Amon_MIROC-ES2L_ssp126_r10i1p1f2_gn_201501-210012.nc" # Miroc ES2L Scenario 126
+ncname <- "tas_Amon_CanESM5-CanOE_ssp585_r2i1p2f1_gn_201501-210012.nc" # CanESM5-CanOE Scenario 585
+# ncname <- "tas_Amon_CanESM5-CanOE_ssp126_r1i1p2f1_gn_201501-210012.nc" # CanESM5-CanOE Scenario 585
 ncfname <- paste(ncpath, ncname, sep="")
 dname <- "tas"  # this is the name of the variable you want to look at
 
@@ -144,7 +147,8 @@ ggplot(yrclim, aes(dt, Tann-273.15))+geom_point()+labs(y="Florida Temperature", 
 # path and filename for data
 ncpath <- "/Users/kieramatiska/Desktop/Bren/ESM 237/HW2/esm237_HW2/"   # path (directory)
 # ncpath <- "/Users/katiemunster/Desktop/ESM237/esm237_HW2/"
-ncname_hist <- "tas_Amon_MIROC-ES2L_historical_r26i1p1f2_gn_185001-201412.nc"  # CESM1 filename
+# ncname_hist <- "tas_Amon_MIROC-ES2L_historical_r26i1p1f2_gn_185001-201412.nc" # Miroc-ES2L Historical
+ncname_hist <- "tas_Amon_CanESM5-CanOE_historical_r1i1p2f1_gn_185001-201412.nc" # CanESM5-CanOE Historical
 ncfname_hist <- paste(ncpath, ncname_hist, sep="")
 dname_hist <- "tas"  # this is the name of the variable you want to look at
 
@@ -230,7 +234,10 @@ ggplot() +
              method = "lm",
              se = FALSE,
              color = "darkred") +
-  labs(title = "Past and Projected Temperature from Miroc-ES2L Scenario 585",
+  labs(# title = "Past and Projected Temperature from CanESM5-CanOE Scenario 126",
+       title = "Past and Projected Temperature from CanESM5-CanOE Scenario 585",
+       # title = "Past and Projected Temperature from Miroc-ES2L Scenario 126",
+       # title = "Past and Projected Temperature from Miroc-ES2L Scenario 585",
        x = "Year",
        y = "Past and Projected Temperature (°C)") +
   theme(plot.title = element_text(hjust = 0.5))
