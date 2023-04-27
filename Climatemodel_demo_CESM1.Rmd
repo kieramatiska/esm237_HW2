@@ -41,8 +41,8 @@ library(lattice)
 library(abind)
 
 # path and filename for data
-#ncpath <- "/Users/kieramatiska/Desktop/Bren/ESM 237/HW2/esm237_HW2/"   # path (directory)
-ncpath <- "/Users/katiemunster/Desktop/ESM237/esm237_HW2/"
+ncpath <- "/Users/kieramatiska/Desktop/Bren/ESM 237/HW2/esm237_HW2/"   # path (directory)
+# ncpath <- "/Users/katiemunster/Desktop/ESM237/esm237_HW2/"
 ncname <- "tas_Amon_MIROC-ES2L_ssp585_r1i1p1f2_gn_201501-210012.nc"  # CESM1 filename
 ncfname <- paste(ncpath, ncname, sep="")
 dname <- "tas"  # this is the name of the variable you want to look at
@@ -135,70 +135,106 @@ clim <- data.frame(time=rtime, tsavg=tsavg)
 yrclim = clim %>% group_by(year(rtime)) %>% summarize(Tann=mean(tsavg))
 yrclim$dt = unique(year(rtime))
 
-ggplot(yrclim, aes(dt, Tann-273.15))+geom_point()+labs(y="Florida Temperature", x="Year")+ geom_smooth(method="lm")
+ggplot(yrclim, aes(dt, Tann-273.15))+geom_point()+labs(y="Florida Temperature", x="Year")+ geom_smooth(method="lm", se = FALSE)
 ```
 
-Part 2: E3SM Data
+# Historical
 
-Here is a brief demonstration of how to read in data from E3SM; once you do, you can use the exact same techniques as in Part 1 to create time series plots, maps, etc. Here I'm going to read in the two files into two different variables - you can also build a loop to do things if you like!
-
-```{r reade3sm}
+```{r readcesm}
 # path and filename for data
 ncpath <- "/Users/kieramatiska/Desktop/Bren/ESM 237/HW2/esm237_HW2/"   # path (directory)
-dname <- "tas"  # this is the name of the variable you want to look at
+# ncpath <- "/Users/katiemunster/Desktop/ESM237/esm237_HW2/"
+ncname_hist <- "tas_Amon_MIROC-ES2L_historical_r26i1p1f2_gn_185001-201412.nc"  # CESM1 filename
+ncfname_hist <- paste(ncpath, ncname_hist, sep="")
+dname_hist <- "tas"  # this is the name of the variable you want to look at
 
-ncname1 <- "tas_Amon_CanESM5-CanOE_historical_r1i1p2f1_gn_185001-201412.nc"  # E3SM filename
-ncname2 <- "tas_Amon_CanESM5-CanOE_historical_r1i1p2f1_gn_185001-201412.nc"  # E3SM filename
-
-ncfname1 <- paste(ncpath, ncname1, sep="")
-ncfname2 <- paste(ncpath, ncname2, sep="")
-
-ncin_e3sm1 <- nc_open(ncfname1)
-ncin_e3sm2 <- nc_open(ncfname2)
-#print(ncin_e3sm)
-
+ncin_hist <- nc_open(ncfname_hist)
+print(ncin_hist)
 ```
 
-Now once again, we read in the time coordinate information as we did for CESM. Since we happen to know that the second file begins immediately after the first one, we also know that we can concatenate the time information from the two files to get a time series of the full time period:
+```{r readcoords}
+lon_hist <- ncvar_get(ncin_hist,"lon")
+nlon_hist <- dim(lon_hist)
+lat_hist <- ncvar_get(ncin_hist,"lat")
+nlat_hist <- dim(lat_hist)
 
-```{r reade3smtime}
-time1 <- ncvar_get(ncin_e3sm1,"time")
-tunits1 <- ncatt_get(ncin_e3sm1,"time","units")
-time2 <- ncvar_get(ncin_e3sm2,"time")
-tunits2 <- ncatt_get(ncin_e3sm2,"time","units")
-
-time=c(time1,time2)
-
-print(tunits1)
+head(lat_hist)
+head(lon_hist)
 ```
 
-Notice that the units of time are now different! E3SM uses a calendar which begins in 1850, rather than 1920. But we can still use the same method of splitting the units string, then giving it to 'chron' to make a time that works.
+```{r readtime}
+time_hist <- ncvar_get(ncin_hist,"time")
+tunits_hist <- ncatt_get(ncin_hist,"time","units")
+nt_hist <- dim(time_hist)
 
-```{r process_e3smtime}
-tustr <- strsplit(tunits1$value, " ")
-tdstr <- strsplit(unlist(tustr)[3], "-")
-tmonth <- as.integer(unlist(tdstr)[2])
-tday <- as.integer(unlist(tdstr)[3])
-tyear <- as.integer(unlist(tdstr)[1])
-rtime <- chron(time,origin=c(tmonth, tday, tyear))
+print(tunits_hist)
 ```
 
-You can use concatenation to stick the temperature data together as well: here I'm using the "abind" package to do this, where the "along" argument tells R which dimension to concatentate the arrays along. Whether or not you choose to do this is up to you - for some applications it will be more necessary than others. You can also regionally average the data from each file individually, then concatenate those average time series... there are lots of possibilities!
-
-```{r read_e3smtemp}
-tas1 <- ncvar_get(ncin_e3sm1, "tas")
-tas2 <- ncvar_get(ncin_e3sm2, "tas")
-
-tas=abind(tas1,tas2,along=1)
+```{r formattime}
+tustr_hist <- strsplit(tunits_hist$value, " ")
+tdstr_hist <- strsplit(unlist(tustr_hist)[3], "-")
+tmonth_hist <- as.integer(unlist(tdstr_hist)[2])
+tday_hist <- as.integer(unlist(tdstr_hist)[3])
+tyear_hist <- as.integer(unlist(tdstr_hist)[1])
+rtime_hist <- chron(time_hist,origin=c(tmonth_hist, tday_hist, tyear_hist))
 ```
 
+```{r readtemp}
+TS_hist <- ncvar_get(ncin_hist, "tas")
+dlname_hist <- ncatt_get(ncin_hist,dname_hist,"long_name")
+dunits_hist <- ncatt_get(ncin_hist,dname_hist,"units")
+fillvalue_hist <- ncatt_get(ncin_hist,dname_hist,"_FillValue_hist")
+```
 
+```{r slice}
+m_hist <- 1
+tmp_slice_hist <- TS_hist[,,m_hist]-273.15     # convert Kelvin to Celsius
+# levelplot of the slice
+grid_hist <- expand.grid(lon_hist=lon_hist, lat_hist=lat_hist)
+cutpts_hist <- c(-50,-40,-30,-20,-10,0,10,20,30,40,50)
+levelplot(tmp_slice_hist ~ lon_hist * lat_hist, data=grid_hist, at=cutpts_hist, cuts=11, pretty=T, 
+  col.regions=(rev(brewer.pal(10,"RdBu"))))
+```
 
+```{r getregion}
+lats_hist=which(lat_hist >= 25.8 & lat_hist <= 30.4) # miami to tallahassee
+#lons=which(lon >= 80.2 & lon <= 84.3) # miami to tallahassee
+lons_hist=which(lon_hist >= 204.2 & lon_hist <= 208.3)
 
+tsavg_hist <- apply(TS_hist[lons_hist,lats_hist,],3,mean) ############ here is the error
 
+clim_hist <- data.frame(time_hist=rtime_hist, tsavg_hist=tsavg_hist)
+yrclim_hist = clim_hist %>% group_by(year(rtime_hist)) %>% summarize(Tann_hist=mean(tsavg_hist))
+yrclim_hist$dt = unique(year(rtime_hist))
 
+ggplot(yrclim_hist, aes(dt, Tann_hist-273.15))+geom_point()+labs(y="Florida Temperature", x="Year")+ geom_smooth(method="lm", se = FALSE)
+```
 
+## Historical and Future Scenario Graph
 
+```{r}
+ggplot() +
+  geom_point(data = yrclim_hist, 
+             aes(x = dt, y = Tann_hist-273.15),
+             color = "gray20") +
+  geom_smooth(data = yrclim_hist, 
+             aes(x = dt, y = Tann_hist-273.15),
+             method = "lm",
+              se = FALSE,
+              color = "black") +
+  geom_point(data = yrclim, 
+             aes(x = dt, y = Tann-273.15),
+             color = "red") +
+  geom_smooth(data = yrclim, 
+             aes(x = dt, y = Tann-273.15),
+             method = "lm",
+             se = FALSE,
+             color = "darkred") +
+  labs(title = "Past and Projected Temperature from Miroc-ES2L Scenario 585",
+       x = "Year",
+       y = "Past and Projected Temperature (°C)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
 
 
